@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Isometric rts.CSharp", "Isometric rts.CSharp.csproj", "{37D17653-7F0E-E371-05A0-4D6BCA99A5B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Isometric rts.CSharp.Editor", "Isometric rts.CSharp.Editor.csproj", "{2F2D63CC-FDA4-717C-A174-EE415BECA0DB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{37D17653-7F0E-E371-05A0-4D6BCA99A5B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37D17653-7F0E-E371-05A0-4D6BCA99A5B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37D17653-7F0E-E371-05A0-4D6BCA99A5B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37D17653-7F0E-E371-05A0-4D6BCA99A5B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F2D63CC-FDA4-717C-A174-EE415BECA0DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F2D63CC-FDA4-717C-A174-EE415BECA0DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F2D63CC-FDA4-717C-A174-EE415BECA0DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F2D63CC-FDA4-717C-A174-EE415BECA0DB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
