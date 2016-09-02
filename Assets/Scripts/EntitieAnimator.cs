@@ -77,6 +77,20 @@ public class EntitieAnimator : MonoBehaviour
     {
         entAnimations = new List<EntitieAnimation> ();
     }
+
+    public void BakeFrames ()
+    {
+        foreach (EntitieAnimation anim in entAnimations)
+        {
+            foreach (Frame frame in anim.sequence)
+            {
+                if (frame.highlightTexture == null)
+                {
+                    frame.highlightTexture = TextureBaker.generateHighlight ((Texture2D)frame.texture, 1, Color.black);
+                }
+            }
+        }
+    }
 }
 
 [System.Serializable]

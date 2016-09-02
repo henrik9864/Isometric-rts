@@ -58,6 +58,7 @@ public class Entitie : MonoBehaviour
         if (anim != null)
         {
             hasAnim = true;
+            anim.BakeFrames ();
         }
     }
 }
