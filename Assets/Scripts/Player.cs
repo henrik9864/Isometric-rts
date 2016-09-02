@@ -2,23 +2,39 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[RequireComponent (typeof (CameraController))]
+[RequireComponent (typeof (CameraController), typeof (UnitController), typeof (UnitManager))]
 public class Player : MonoBehaviour
 {
     public Controls controls = new Controls ();
     public UI ui = new UI ();
     public float speed;
 
-    [SerializeField]
-    List<Unit> selectedUnits = new List<Unit> ();
+    CameraController cameraController;
+    UnitController unitController;
+    UnitManager unitManager;
 
-    CameraController controller;
     Vector3 selectStart;
     Rect selsectBox;
 
+    Team debugTeam;
+    public Team team
+    {
+        get
+        {
+            return debugTeam;
+        }
+    }
+
+    bool debug;
+
     void Start ()
     {
-        controller = GetComponent<CameraController> ();
+        cameraController = GetComponent<CameraController> ();
+        unitController = GetComponent<UnitController> ();
+        unitManager = GetComponent<UnitManager> ();
+
+        debugTeam = Team.CreateTeam ("PlayerTeam", unitManager);
+        unitController.SetTeam (debugTeam);
     }
 
     void Update ()
@@ -26,6 +42,16 @@ public class Player : MonoBehaviour
         ControlCamera ();
 
         UnitSelection ();
+
+        if (debug)
+        {
+            Debug ();
+        }
+
+        if (Input.GetKeyDown (KeyCode.F12))
+        {
+            debug = !debug;
+        }
     }
 
     void OnGUI ()
@@ -35,25 +61,44 @@ public class Player : MonoBehaviour
         style.normal.background = ui.boxSelector;
 
         GUI.Box (selsectBox, "", style);
+
+        if (debug && debugTeam != null)
+        {
+            GUI.Box (new Rect (20, 20, 300, 70), "");
+
+            if (GUI.Button (new Rect (30, 30, 100, 20), debugTeam.id.ToString ()))
+            {
+                unitController.DeselectAllUnits ();
+                debugTeam = Team.GetTeam (debugTeam.id + 1);
+                if (debugTeam == null)
+                {
+                    debugTeam = Team.GetTeam (0);
+                }
+            }
+            if (GUI.Button (new Rect (30, 60, 100, 20), "Make new team."))
+            {
+                Team.CreateTeam ("Test: " + (debugTeam.id + 1).ToString (), unitManager);
+            }
+        }
     }
 
     void ControlCamera ()
     {
         if (Input.GetKey (controls.forward))
         {
-            controller.Move (-transform.forward, speed);
+            cameraController.Move (-transform.forward, speed);
         }
         if (Input.GetKey (controls.backward))
         {
-            controller.Move (transform.forward, speed);
+            cameraController.Move (transform.forward, speed);
         }
         if (Input.GetKey (controls.right))
         {
-            controller.Move (transform.right, speed);
+            cameraController.Move (transform.right, speed);
         }
         if (Input.GetKey (controls.left))
         {
-            controller.Move (-transform.right, speed);
+            cameraController.Move (-transform.right, speed);
         }
     }
 
@@ -106,19 +151,19 @@ public class Player : MonoBehaviour
                     Rect hitbox = EntitieRenderer.getEntitieHitbox (unit);
                     if (hitbox.Contains (new Vector2 (mousePos.x, Screen.height - mousePos.y)))
                     {
-                        ToggleUnit (unit);
+                        unitController.ToggleUnit (unit);
                         deselectUnits = false;
                     }
                 }
 
                 if (deselectUnits)
                 {
-                    selectedUnits.RemoveRange (0, selectedUnits.Count);
+                    unitController.DeselectAllUnits ();
                 }
             }
             else
             {
-                SelectUnitsFromRect (selsectBox);
+                unitController.SelectUnitsFromRect (selsectBox);
                 selectStart = Vector3.zero;
                 selsectBox = new Rect ();
             }
@@ -130,71 +175,21 @@ public class Player : MonoBehaviour
 
             if (Physics.Raycast (ray, out hit, Mathf.Infinity))
             {
-                MoveUnits (hit.point, MoveUnit.Flock);
+                unitController.MoveUnits (hit.point, MoveUnit.Translate);
             }
         }
     }
 
-    void SelectUnitsFromRect ( Rect selectionBox )
+    void Debug ()
     {
-        Unit[] units = FindObjectsOfType<Unit> ();
-
-        foreach (Unit unit in units)
+        if (Input.GetKeyDown (KeyCode.F1))
         {
-            if (selectionBox.Contains (EntitieRenderer.getEntitieHitbox (unit).center))
+            Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast (ray, out hit, Mathf.Infinity))
             {
-                SelectUnit (unit);
-            }
-        }
-    }
-
-    void SelectUnit ( Unit unit )
-    {
-        if (selectedUnits.Find (( a ) => { return unit == a; }) == null)
-        {
-            selectedUnits.Add (unit);
-            unit.ToggleHighlight (true);
-        }
-    }
-
-    void ToggleUnit ( Unit unit )
-    {
-        if (selectedUnits.Find (( a ) => { return unit == a; }) == null)
-        {
-            selectedUnits.Add (unit);
-            unit.ToggleHighlight (true);
-        }
-        else
-        {
-            selectedUnits.Remove (unit);
-            unit.ToggleHighlight (false);
-        }
-    }
-
-    void MoveUnits ( Vector3 pos, MoveUnit type )
-    {
-        Vector3 averageUnitPos = Vector3.zero;
-        foreach (Unit unit in selectedUnits)
-        {
-            averageUnitPos += unit.transform.position;
-        }
-        averageUnitPos /= selectedUnits.Count;
-
-        foreach (Unit unit in selectedUnits)
-        {
-            switch (type)
-            {
-                case MoveUnit.Point:
-                    unit.Move (pos);
-                    break;
-                case MoveUnit.Translate:
-                    unit.Move (pos + (-averageUnitPos + unit.transform.position));
-                    break;
-                case MoveUnit.Flock:
-                    StartCoroutine (unit.Flock (pos));
-                    break;
-                default:
-                    break;
+                unitController.SpawnUnit (hit.point, Resources.Load<Unit> ("Unit")).SetTeam (debugTeam); // SPawns a unit and forces it to be the custom player team.
             }
         }
     }
@@ -206,9 +201,8 @@ public class UI
     public Texture2D boxSelector;
 }
 
-public enum MoveUnit
+public enum PlayerState
 {
-    Point,
-    Translate,
-    Flock,
+    Controlling,
+    Building,
 }
