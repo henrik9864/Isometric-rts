@@ -83,17 +83,26 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Biome\CellularAutomata.cs" />
     <Compile Include="Assets\Scripts\Biome\MapGenerator.cs" />
-    <Compile Include="Assets\Scripts\CameraController.cs" />
-    <Compile Include="Assets\Scripts\Entitie.cs" />
-    <Compile Include="Assets\Scripts\EntitieAnimator.cs" />
-    <Compile Include="Assets\Scripts\EntitieRenderer.cs" />
-    <Compile Include="Assets\Scripts\Entities\Unit.cs" />
+    <Compile Include="Assets\Scripts\Entitie\Entitie.cs" />
+    <Compile Include="Assets\Scripts\Entitie\EntitieAnimator.cs" />
+    <Compile Include="Assets\Scripts\Entitie\EntitieRenderer.cs" />
+    <Compile Include="Assets\Scripts\Entitie\Entities\Unit.cs" />
     <Compile Include="Assets\Scripts\Interfaces.cs" />
-    <Compile Include="Assets\Scripts\Player.cs" />
+    <Compile Include="Assets\Scripts\Navigation\Agent.cs" />
+    <Compile Include="Assets\Scripts\Navigation\Grid.cs" />
+    <Compile Include="Assets\Scripts\Navigation\Group.cs" />
+    <Compile Include="Assets\Scripts\Navigation\Heap.cs" />
+    <Compile Include="Assets\Scripts\Navigation\Node.cs" />
+    <Compile Include="Assets\Scripts\Navigation\Path.cs" />
+    <Compile Include="Assets\Scripts\Navigation\PathRequestManager.cs" />
+    <Compile Include="Assets\Scripts\Navigation\Pathfinding.cs" />
+    <Compile Include="Assets\Scripts\Player\CameraController.cs" />
+    <Compile Include="Assets\Scripts\Player\Player.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerUI.cs" />
+    <Compile Include="Assets\Scripts\Player\UnitController.cs" />
+    <Compile Include="Assets\Scripts\Player\UnitManager.cs" />
     <Compile Include="Assets\Scripts\Team.cs" />
     <Compile Include="Assets\Scripts\TextureBaker.cs" />
-    <Compile Include="Assets\Scripts\UnitController.cs" />
-    <Compile Include="Assets\Scripts\UnitManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

@@ -131,6 +131,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Editor\AnimationCreator.cs" />
     <Compile Include="Assets\Scripts\Editor\AnimationPreview.cs" />
+    <Compile Include="Assets\Scripts\Editor\PathfindingWindow.cs" />
     <Compile Include="Assets\Scripts\Editor\UnitEditor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />

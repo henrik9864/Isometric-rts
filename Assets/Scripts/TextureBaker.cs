@@ -33,6 +33,7 @@ public class TextureBaker
             }
         }
         texture.Apply ();
+        texture.filterMode = FilterMode.Point;
 
         return texture;
     }
