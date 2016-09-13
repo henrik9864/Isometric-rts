@@ -297,6 +297,7 @@ public class Player : MonoBehaviour
             if (debugTeam == null)
             {
                 debugTeam = Team.GetTeam (0);
+
             }
         }
         if (GUI.Button (new Rect (10, 270, 130, 20), "Make new team."))
