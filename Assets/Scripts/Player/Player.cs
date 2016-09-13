@@ -2,12 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[RequireComponent (typeof (CameraController), typeof (UnitController), typeof (UnitManager))]
-[RequireComponent (typeof (PlayerUI))]
+[RequireComponent (typeof (CameraController), typeof (PlayerUI), typeof (UnitManager))]
 public class Player : MonoBehaviour
 {
     public Controls controls = new Controls ();
     public UI ui = new UI ();
+    public List<Building> buildings;
     public float speed;
     public bool enableDebug;
 
@@ -18,6 +18,7 @@ public class Player : MonoBehaviour
     //float native_width = 960;
     //float native_height = 540;
 
+    BuildingController buildingController;
     CameraController cameraController;
     UnitController unitController;
     UnitManager unitManager;
@@ -27,7 +28,8 @@ public class Player : MonoBehaviour
     Rect selsectBox;
     bool selecting;
 
-    UiOptions uiOptions = UiOptions.Units;
+    playerState state = playerState.Controlling;
+    UiOptions uiState = UiOptions.Selected;
     int uiOptionsIndex = 0;
 
     Team debugTeam;
@@ -42,15 +44,18 @@ public class Player : MonoBehaviour
     bool debug;
     string debugUnitName = "Unit";
 
+    int selectedBuilding;
+    Building placeHolder;
+
     void Start ()
     {
         cameraController = GetComponent<CameraController> ();
-        unitController = GetComponent<UnitController> ();
         unitManager = GetComponent<UnitManager> ();
         playerUi = GetComponent<PlayerUI> ();
 
         debugTeam = Team.CreateTeam ("PlayerTeam", unitManager);
-        unitController.SetTeam (debugTeam);
+        unitController = new UnitController (debugTeam);
+        buildingController = new BuildingController ();
 
         debug = enableDebug;
     }
@@ -59,13 +64,19 @@ public class Player : MonoBehaviour
     {
         ControlCamera ();
 
-        if (debug)
+        switch (state)
         {
-            Debug ();
-        }
-        else
-        {
-            UnitSelection ();
+            case playerState.Controlling:
+                Selection ();
+                break;
+            case playerState.Building:
+                Building ();
+                break;
+            case playerState.Debug:
+                Debug ();
+                break;
+            default:
+                break;
         }
     }
 
@@ -78,25 +89,6 @@ public class Player : MonoBehaviour
         style.normal.background = ui.boxSelector;
 
         GUI.Box (selsectBox, "", style);
-
-        /*if (debug && debugTeam != null)
-        {
-            GUI.Box (new Rect (20, 20, 300, 70), "");
-
-            if (GUI.Button (new Rect (30, 30, 100, 20), debugTeam.id.ToString ()))
-            {
-                unitController.DeselectAllUnits ();
-                debugTeam = Team.GetTeam (debugTeam.id + 1);
-                if (debugTeam == null)
-                {
-                    debugTeam = Team.GetTeam (0);
-                }
-            }
-            if (GUI.Button (new Rect (30, 60, 100, 20), "Make new team."))
-            {
-                Team.CreateTeam ("Test: " + (debugTeam.id + 1).ToString (), unitManager);
-            }
-        }*/
 
         Ui ();
     }
@@ -128,7 +120,7 @@ public class Player : MonoBehaviour
             if (uiOptionsIndex > 0)
             {
                 uiOptionsIndex--;
-                uiOptions = (UiOptions)uiOptionsIndex;
+                uiState = (UiOptions)uiOptionsIndex;
             }
         }
         else if (GUI.Button (new Rect (120, 160, 20, 20), ">"))
@@ -136,16 +128,17 @@ public class Player : MonoBehaviour
             if (uiOptionsIndex < System.Enum.GetNames (typeof (UiOptions)).Length - 1)
             {
                 uiOptionsIndex++;
-                uiOptions = (UiOptions)uiOptionsIndex;
+                uiState = (UiOptions)uiOptionsIndex;
             }
         }
 
-        switch (uiOptions)
+        switch (uiState)
         {
-            case UiOptions.Units:
-                Units ();
+            case UiOptions.Selected:
+                Selected ();
                 break;
             case UiOptions.Building:
+                UiBuilding ();
                 break;
             case UiOptions.Debug:
                 UiDebug ();
@@ -153,9 +146,26 @@ public class Player : MonoBehaviour
             default:
                 break;
         }
+
+        if (buildingController.building != null)
+        {
+            Building building = buildingController.building;
+            Vector2 buildingPos = Camera.main.WorldToScreenPoint (building.transform.position);
+            Vector2 uiSize = building.uiSize;
+
+            Rect buildingHitbox = EntitieRenderer.getEntitieHitbox (building);
+            Vector2 buildingUi = new Vector2 (buildingPos.x - uiSize.x / 2, Screen.height - buildingPos.y - buildingHitbox.height - uiSize.y);
+
+            playerUi.Box (new Rect (buildingUi.x, buildingUi.y, uiSize.x, uiSize.y), "");
+            GUI.matrix = Matrix4x4.TRS (new Vector3 (buildingUi.x, buildingUi.y, 0), Quaternion.identity, new Vector3 (rx, ry, 1));
+
+            building.BuildingUI ();
+
+            GUI.matrix = Matrix4x4.TRS (new Vector3 (0, 0, 0), Quaternion.identity, new Vector3 (rx, ry, 1));
+        }
     }
 
-    void Units ()
+    void Selected ()
     {
         for (int i = 0; i < unitController.units.Count; i++)
         {
@@ -163,6 +173,47 @@ public class Player : MonoBehaviour
             {
                 unitController.DeselectUnit (unitController.units[i]);
             }
+        }
+    }
+
+    void UiBuilding ()
+    {
+        for (int i = 0; i < buildings.Count; i++)
+        {
+            if (GUI.Button (new Rect (10, 190 + 30 * i, 130, 20), buildings[i].name))
+            {
+                state = playerState.Building;
+                selectedBuilding = i;
+                placeHolder = Instantiate (buildings[i], Vector3.zero, Quaternion.identity);
+                placeHolder.gameObject.SetActive (false);
+            }
+        }
+    }
+
+    void Building ()
+    {
+        if (placeHolder != null)
+        {
+            Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast (ray, out hit, Mathf.Infinity))
+            {
+                placeHolder.transform.position = hit.point;
+                placeHolder.gameObject.SetActive (true);
+            }
+            else
+            {
+                placeHolder.gameObject.SetActive (false);
+            }
+        }
+
+        if (Input.GetMouseButtonDown (0))
+        {
+            team.BuildBuilding (placeHolder.transform.position, buildings[selectedBuilding]);
+
+            Destroy (placeHolder.gameObject);
+            state = playerState.Controlling;
         }
     }
 
@@ -186,7 +237,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    void UnitSelection ()
+    void Selection ()
     {
         if (Input.GetMouseButtonDown (controls.rightClick))
         {
@@ -229,34 +280,51 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButtonUp (controls.rightClick))
         {
             Vector3 mousePos = Input.mousePosition;
+            ISelectable[] selected = new ISelectable[0];
+            bool toggleSelectable = false;
+            bool deselectUnits = false;
 
             if ((mousePos - selectStart).magnitude < 1 && playerUi.IsValid (new Vector2 (mousePos.x, Screen.height - mousePos.y)))
             {
-                Unit[] units = FindObjectsOfType<Unit> ();
-                bool deselectUnits = true;
-
-                foreach (Unit unit in units)
-                {
-                    Rect hitbox = EntitieRenderer.getEntitieHitbox (unit);
-                    if (hitbox.Contains (new Vector2 (mousePos.x, Screen.height - mousePos.y)))
-                    {
-                        unitController.ToggleUnit (unit);
-                        deselectUnits = false;
-                    }
-                }
-
-                if (deselectUnits)
-                {
-                    unitController.DeselectAllUnits ();
-                }
+                selected = Selector.GetSelectables (new Vector2 (mousePos.x, Screen.height - mousePos.y)).ToArray ();
+                deselectUnits = true;
+                toggleSelectable = true;
             }
             else if (selecting)
             {
-                unitController.SelectUnitsFromRect (selsectBox);
+                selected = Selector.GetSelectables (selsectBox).ToArray ();
                 selectStart = Vector3.zero;
                 selsectBox = new Rect ();
             }
+
             selecting = false;
+
+            foreach (ISelectable selectable in selected)
+            {
+                if (selectable.GetType () == typeof (Unit) || selectable.GetType ().IsSubclassOf (typeof (Unit)))
+                {
+                    if (toggleSelectable)
+                    {
+                        unitController.ToggleUnit ((Unit)selectable);
+                        deselectUnits = false;
+                    }
+                    else
+                    {
+                        unitController.SelectUnit ((Unit)selectable);
+                    }
+                }
+                else if (selectable.GetType () == typeof (Building) || selectable.GetType ().IsSubclassOf (typeof (Building)))
+                {
+                    buildingController.SelectBuilding ((Building)selectable);
+                    deselectUnits = false;
+                }
+            }
+
+            if (deselectUnits)
+            {
+                unitController.DeselectAllUnits ();
+                buildingController.DeselectBuilding ();
+            }
         }
         if (Input.GetMouseButtonUp (controls.leftClick))
         {
@@ -279,14 +347,26 @@ public class Player : MonoBehaviour
 
             if (Physics.Raycast (ray, out hit, Mathf.Infinity))
             {
-                unitController.SpawnUnit (hit.point, Resources.Load<Unit> (debugUnitName)).SetTeam (debugTeam); // SPawns a unit and forces it to be the custom player team.
+                team.SpawnUnit (hit.point, Resources.Load<Unit> (debugUnitName)).SetTeam (debugTeam); // SPawns a unit and forces it to be the custom player team.
             }
         }
     }
 
     void UiDebug ()
     {
-        debug = GUI.Toggle (new Rect (10, 190, 130, 20), debug, "Debug");
+        bool newDebug = GUI.Toggle (new Rect (10, 190, 130, 20), debug, "Debug");
+        if (newDebug != debug)
+        {
+            if (newDebug == true)
+            {
+                state = playerState.Debug;
+            }
+            else
+            {
+                state = playerState.Controlling;
+            }
+            debug = newDebug;
+        }
 
         debugUnitName = GUI.TextField (new Rect (10, 210, 130, 20), debugUnitName);
 
@@ -316,15 +396,17 @@ public class UI
     public Texture2D box;
 }
 
-public enum PlayerState
+public enum playerState
 {
     Controlling,
     Building,
+    Debug,
 }
 
 public enum UiOptions
 {
-    Units,
+    Selected,
     Building,
     Debug,
+    Info,
 }

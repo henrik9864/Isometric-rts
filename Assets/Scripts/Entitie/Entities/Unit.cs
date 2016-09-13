@@ -2,7 +2,7 @@
 using System.Collections;
 
 [RequireComponent (typeof (UnityEngine.AI.NavMeshAgent))]
-public class Unit : Entitie, IDamageable
+public class Unit : Entitie, IDamageable, IHighlightable, ISelectable
 {
     UnityEngine.AI.NavMeshAgent agent;
     Team unitTeam;
@@ -11,6 +11,33 @@ public class Unit : Entitie, IDamageable
         get
         {
             return unitTeam;
+        }
+    }
+
+    bool highlighted;
+    Texture2D highlightedTexture;
+
+    public override Texture2D image
+    {
+        get
+        {
+            if (hasAnim)
+            {
+                return (Texture2D)anim.getCurrentFrame (highlighted);
+            }
+            else if (highlighted)
+            {
+                return highlightedTexture;
+            }
+            else
+            {
+                return entImage;
+            }
+        }
+
+        protected set
+        {
+            entImage = value;
         }
     }
 
@@ -56,12 +83,21 @@ public class Unit : Entitie, IDamageable
         }
     }
 
+    public Rect hitbox
+    {
+        get
+        {
+            return EntitieRenderer.getEntitieHitbox (this);
+        }
+    }
+
     public event InterfaceEventHandler _onKilled;
 
     protected override void Start ()
     {
         base.Start ();
         agent = GetComponent<UnityEngine.AI.NavMeshAgent> ();
+        highlightedTexture = TextureBaker.generateHighlight (entImage, 1, Color.black);
     }
 
     public void Move ( Vector3 pos )
@@ -123,6 +159,11 @@ public class Unit : Entitie, IDamageable
         {
             Kill ();
         }
+    }
+
+    public void ToggleHighlight ( bool state )
+    {
+        highlighted = state;
     }
 
     void Kill ()

@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class UnitController : MonoBehaviour
+public class UnitController
 {
 
     List<Unit> selectedUnits = new List<Unit> ();
@@ -16,17 +16,9 @@ public class UnitController : MonoBehaviour
 
     Team team;
 
-    public void SelectUnitsFromRect ( Rect selectionBox )
+    public UnitController ( Team team )
     {
-        Unit[] units = FindObjectsOfType<Unit> ();
-
-        foreach (Unit unit in units)
-        {
-            if (unit.team.id == team.id && selectionBox.Contains (EntitieRenderer.getEntitieHitbox (unit).center))
-            {
-                SelectUnit (unit);
-            }
-        }
+        this.team = team;
     }
 
     public void SelectUnit ( Unit unit )
@@ -83,7 +75,7 @@ public class UnitController : MonoBehaviour
 
         foreach (Unit unit in selectedUnits)
         {
-            StopCoroutine (unit.Flock (pos));
+            Coroutines.instance.StopCoroutine (unit.Flock (pos));
             switch (type)
             {
                 case MoveUnit.Point:
@@ -93,25 +85,12 @@ public class UnitController : MonoBehaviour
                     unit.Move (pos + (-averageUnitPos + unit.transform.position));
                     break;
                 case MoveUnit.Flock:
-                    StartCoroutine (unit.Flock (pos));
+                    Coroutines.instance.StartCoroutine (unit.Flock (pos));
                     break;
                 default:
                     break;
             }
         }
-    }
-
-    public void SetTeam ( Team team )
-    {
-        this.team = team;
-    }
-
-    public Unit SpawnUnit ( Vector3 pos, Unit unit )
-    {
-        GameObject obj = (GameObject)Instantiate (unit.gameObject, pos, Quaternion.identity);
-        Unit unitObj = obj.GetComponent<Unit> ();
-        unitObj.SetTeam (team);
-        return unitObj;
     }
 
     void SelectedUnitDead ( Unit unit )

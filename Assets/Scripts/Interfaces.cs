@@ -9,3 +9,21 @@ public interface IDamageable
 
     void TakeDamage ( float amount );
 }
+
+public interface IHighlightable
+{
+    void ToggleHighlight ( bool state );
+
+    Texture2D image
+    {
+        get;
+    }
+}
+
+public interface ISelectable
+{
+    Rect hitbox
+    {
+        get;
+    }
+}

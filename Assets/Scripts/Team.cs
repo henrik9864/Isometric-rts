@@ -69,6 +69,24 @@ public class Team
         unitsInTeam.Remove (unit);
     }
 
+    public Unit SpawnUnit ( Vector3 pos, Unit unit )
+    {
+        GameObject obj = (GameObject)MonoBehaviour.Instantiate (unit.gameObject, pos, Quaternion.identity);
+        Unit unitObj = obj.GetComponent<Unit> ();
+        unitObj.SetTeam (this);
+        obj.name = unit.name;
+        return unitObj;
+    }
+
+    public Building BuildBuilding ( Vector3 pos, Building building )
+    {
+        GameObject obj = (GameObject)MonoBehaviour.Instantiate (building.gameObject, pos, Quaternion.identity);
+        Building buildingObj = obj.GetComponent<Building> ();
+        buildingObj.SetTeam (this);
+        obj.name = building.name;
+        return buildingObj;
+    }
+
     public static Team CreateTeam ( string name, UnitManager manager )
     {
         Team team = new Team (teamCount, name, manager);

@@ -38,6 +38,32 @@ public class TextureBaker
         return texture;
     }
 
+    public static Texture2D blendTextures ( Texture2D topLeft, Texture2D topRight, Texture2D bottomLeft, Texture2D bottomRight, float precent )
+    {
+        Texture2D texture = new Texture2D (topLeft.width, topLeft.height);
+
+        for (int x = 0; x < texture.width; x++)
+        {
+            for (int y = 0; y < texture.height; y++)
+            {
+                float precentX = (float)x / texture.width;
+                float precentY = (float)y / texture.height;
+
+                Color bottomLeftBlend = topLeft.GetPixel (x, y) * ((1 - precentX) * (1 - precentY));
+                Color bottomRightBlend = bottomRight.GetPixel (x, y) * ((precentX) * (1 - precentY));
+                Color topLeftBlend = topLeft.GetPixel (x, y) * ((1 - precentX) * (precentY));
+                Color topRightBlend = topRight.GetPixel (x, y) * ((precentX) * (precentY));
+
+                Color color = bottomRightBlend + topLeftBlend + bottomLeftBlend + topRightBlend;
+
+                texture.SetPixel (x, y, color);
+            }
+        }
+
+        texture.Apply ();
+        return texture;
+    }
+
     static Color[] getNeighbours ( Texture2D texture, int startX, int startY, int range )
     {
         List<Color> neighbours = new List<Color> ();

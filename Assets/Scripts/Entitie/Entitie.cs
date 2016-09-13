@@ -4,27 +4,20 @@ using System.Collections;
 public class Entitie : MonoBehaviour
 {
     [SerializeField]
-    Texture2D entImage;
+    protected Texture2D entImage;
     [SerializeField]
-    float entScale = 1;
-
-    bool highlighted;
-    Texture2D highlightedTexture;
+    protected float entScale = 1;
 
     protected EntitieAnimator anim;
     protected bool hasAnim;
 
-    public Texture2D image
+    public virtual Texture2D image
     {
         get
         {
             if (hasAnim)
             {
-                return (Texture2D)anim.getCurrentFrame (highlighted);
-            }
-            else if (highlighted)
-            {
-                return highlightedTexture;
+                return (Texture2D)anim.getCurrentFrame (false);
             }
             else
             {
@@ -46,14 +39,8 @@ public class Entitie : MonoBehaviour
         }
     }
 
-    public void ToggleHighlight ( bool state )
-    {
-        highlighted = state;
-    }
-
     protected virtual void Start ()
     {
-        highlightedTexture = TextureBaker.generateHighlight (entImage, 1, Color.black);
         anim = gameObject.GetComponent<EntitieAnimator> ();
         if (anim != null)
         {

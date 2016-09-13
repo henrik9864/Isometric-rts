@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 public class CellularAutomata : MonoBehaviour
 {
+    public Mesh tileMesh;
+    public Material tileMaterial;
 
     public int simTime;
     public Vector2 mapSize;
@@ -12,8 +14,6 @@ public class CellularAutomata : MonoBehaviour
     public List<CellBiome> biomes = new List<CellBiome> ();
 
     Cell[,] tileMap;
-
-    //float timeToNextUpdate = 1;
 
     void Start ()
     {
@@ -34,11 +34,37 @@ public class CellularAutomata : MonoBehaviour
         {
             UpdateCells ();
         }
-    }
 
-    void Update ()
-    {
+        foreach (Cell cell in tileMap)
+        {
+            GameObject obj = new GameObject ("Tile: " + cell.pos.x.ToString () + "," + cell.pos.y.ToString ());
+            obj.transform.parent = transform;
+            obj.transform.localPosition = transform.position + new Vector3 (cell.pos.x, 0, cell.pos.y) - new Vector3 (mapSize.x, 0, mapSize.y) / 2;
+            obj.transform.localScale = new Vector3 (1, .1f, 1);
+            obj.transform.rotation = transform.rotation;
 
+            obj.AddComponent<MeshFilter> ().mesh = tileMesh;
+            MeshRenderer meshrendere = obj.AddComponent<MeshRenderer> ();
+            meshrendere.material = tileMaterial;
+            meshrendere.material.color = Color.white;
+            meshrendere.material.mainTexture = biomes[cell.id].texture;
+
+            Cell[] neighbours = getNeighbours ((int)cell.pos.x, (int)cell.pos.y, 1, -1).ToArray ();
+            System.Array.Resize (ref neighbours, 8);
+
+            //if (neighbours.Count == 8)
+            {
+                Texture2D topLeft = neighbours[0] != null ? (Texture2D)biomes[neighbours[0].id].texture : (Texture2D)biomes[cell.id].texture;
+                Texture2D topRight = neighbours[4] != null ? (Texture2D)biomes[neighbours[4].id].texture : (Texture2D)biomes[cell.id].texture;
+                Texture2D bottomLeft = neighbours[6] != null ? (Texture2D)biomes[neighbours[6].id].texture : (Texture2D)biomes[cell.id].texture;
+                Texture2D bottomRight = neighbours[2] != null ? (Texture2D)biomes[neighbours[2].id].texture : (Texture2D)biomes[cell.id].texture;
+
+                if (topLeft != null && topRight != null && bottomLeft != null && bottomRight != null)
+                {
+                    meshrendere.material.mainTexture = TextureBaker.blendTextures (topLeft, topRight, bottomLeft, bottomRight, 1);
+                }
+            }
+        }
     }
 
     void UpdateCells ()
@@ -82,12 +108,10 @@ public class CellularAutomata : MonoBehaviour
             }
         }
 
-        print ("Update done");
-
         tileMap = newTileMap;
     }
 
-    List<Cell> getNeighbours ( int startX, int startY, int id )
+    List<Cell> getNeighbours ( int startX, int startY, int id = -1 )
     {
         List<Cell> neighbours = new List<Cell> ();
         for (int x = -1; x < 2; x++)
@@ -114,7 +138,7 @@ public class CellularAutomata : MonoBehaviour
         return neighbours;
     }
 
-    List<Cell> getNeighbours ( int startX, int startY, int range, int id )
+    List<Cell> getNeighbours ( int startX, int startY, int range, int id = -1 )
     {
         List<Cell> neighbours = new List<Cell> ();
         for (int x = -range; x < range + 1; x++)
@@ -123,7 +147,7 @@ public class CellularAutomata : MonoBehaviour
             {
                 if (startX + x >= 0 && startX + x < mapSize.x && startY + y >= 0 && startY + y < mapSize.y && !(x == 0 && y == 0))
                 {
-                    if (tileMap[startX + x, startY] != null && (tileMap[startX + x, startY + y].id == id || !tileMap[startX + x, startY + y].alive))
+                    if (tileMap[startX + x, startY] != null && (tileMap[startX + x, startY + y].id == id || !tileMap[startX + x, startY + y].alive || id == -1))
                     {
                         neighbours.Add (tileMap[startX + x, startY + y]);
                     }
@@ -143,7 +167,7 @@ public class CellularAutomata : MonoBehaviour
                 {
                     Cell cell = tileMap[x, y];
                     Gizmos.color = cell.alive ? cell.color : Color.grey;
-                    Gizmos.DrawWireCube (transform.position + new Vector3 (cell.pos.x, 0, cell.pos.y) - new Vector3 (mapSize.x, 0, mapSize.y) / 2, new Vector3 (1, .1f, 1) * .9f);
+                    Gizmos.DrawWireCube (transform.position + new Vector3 (cell.pos.x, 1, cell.pos.y) - new Vector3 (mapSize.x, 0, mapSize.y) / 2, new Vector3 (1, .1f, 1) * .9f);
                 }
             }
         }
@@ -197,4 +221,5 @@ public class CellBiome
     public string name = "Biome";
 
     public Color color;
+    public Texture texture;
 }
